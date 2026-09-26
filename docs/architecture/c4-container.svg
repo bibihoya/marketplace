@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1250" viewBox="0 0 1800 1250" role="img" aria-labelledby="title desc">
+  <title id="title">Marketplace — диаграмма контейнеров C4</title>
+  <desc id="desc">Покупатель и продавец используют Web Application и API Gateway. Marketplace состоит из шести доменных сервисов с отдельными базами PostgreSQL, RabbitMQ и внешних провайдеров.</desc>
+  <defs>
+    <style>
+      .canvas{fill:#fff;stroke:#d9e2ea;stroke-width:2}.boundary{fill:#f8fbff;stroke:#2f6f9f;stroke-width:3;stroke-dasharray:12 8}.person{fill:#08427b;stroke:#052e56;stroke-width:2}.container{fill:#438dd5;stroke:#1f5f99;stroke-width:2}.database{fill:#6aa9df;stroke:#2c6f9f;stroke-width:2}.broker{fill:#8b5fbf;stroke:#65408f;stroke-width:2}.external{fill:#777;stroke:#4f4f4f;stroke-width:2}.page-title{font:700 30px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#18324a}.boundary-title{font:700 21px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#2f6f9f}.name{font:700 18px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#fff;text-anchor:middle}.tech{font:600 14px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#eaf5ff;text-anchor:middle}.desc{font:400 13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#fff;text-anchor:middle}.db-name{font:700 16px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#fff;text-anchor:middle}.label{font:600 12px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#31485b;text-anchor:middle;paint-order:stroke;stroke:#fff;stroke-width:5;stroke-linejoin:round}.small{font:500 13px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#4a5d6d}.sync{fill:none;stroke:#315f82;stroke-width:2.5;marker-end:url(#sync-arrow)}.async{fill:none;stroke:#b66a19;stroke-width:2.5;stroke-dasharray:8 6;marker-end:url(#async-arrow)}.data{fill:none;stroke:#5a7b95;stroke-width:2;marker-end:url(#data-arrow)}
+    </style>
+    <marker id="sync-arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0 0v6l9-3z" fill="#315f82"/></marker>
+    <marker id="async-arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0 0v6l9-3z" fill="#b66a19"/></marker>
+    <marker id="data-arrow" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0 0v6l9-3z" fill="#5a7b95"/></marker>
+  </defs>
+
+  <rect class="canvas" x="1" y="1" width="1798" height="1248"/>
+  <text class="page-title" x="900" y="42" text-anchor="middle">Marketplace — диаграмма контейнеров C4</text>
+  <rect class="boundary" x="230" y="70" width="1200" height="1090" rx="10"/>
+  <text class="boundary-title" x="255" y="103">Software System: Marketplace</text>
+
+  <rect class="person" x="25" y="180" width="170" height="105" rx="6"/>
+  <text class="name" x="110" y="211">Покупатель</text><text class="tech" x="110" y="236">[Person]</text><text class="desc" x="110" y="261">Лента и заказы</text>
+  <rect class="person" x="25" y="335" width="170" height="105" rx="6"/>
+  <text class="name" x="110" y="366">Продавец</text><text class="tech" x="110" y="391">[Person]</text><text class="desc" x="110" y="416">Управляет товарами</text>
+
+  <rect class="container" x="330" y="125" width="250" height="105" rx="6"/>
+  <text class="name" x="455" y="156">Web Application</text><text class="tech" x="455" y="181">[Container: Web]</text><text class="desc" x="455" y="206">Интерфейс обеих ролей</text>
+  <rect class="container" x="785" y="125" width="270" height="105" rx="6"/>
+  <text class="name" x="920" y="156">API Gateway</text><text class="tech" x="920" y="181">[Container: HTTP]</text><text class="desc" x="920" y="206">Маршрутизация и токены</text>
+
+  <rect class="container" x="290" y="330" width="270" height="120" rx="6"/>
+  <text class="name" x="425" y="361">User Service</text><text class="tech" x="425" y="386">[Container: Go / HTTP]</text><text class="desc" x="425" y="411">Учётные записи, роли</text><text class="desc" x="425" y="432">и контактные данные</text>
+  <rect class="container" x="660" y="330" width="270" height="120" rx="6"/>
+  <text class="name" x="795" y="361">Catalog Service</text><text class="tech" x="795" y="386">[Container: Go / HTTP]</text><text class="desc" x="795" y="411">Товары, категории, цены</text><text class="desc" x="795" y="432">и публикация</text>
+  <rect class="container" x="1030" y="330" width="270" height="120" rx="6"/>
+  <text class="name" x="1165" y="361">Feed Service</text><text class="tech" x="1165" y="386">[Container: Go / HTTP]</text><text class="desc" x="1165" y="411">Лента, предпочтения</text><text class="desc" x="1165" y="432">и ранжирование</text>
+
+  <g><ellipse class="database" cx="425" cy="490" rx="105" ry="24"/><rect class="database" x="320" y="490" width="210" height="42"/><ellipse class="database" cx="425" cy="532" rx="105" ry="24"/><text class="db-name" x="425" y="510">User DB</text><text class="tech" x="425" y="532">PostgreSQL</text></g>
+  <g><ellipse class="database" cx="795" cy="490" rx="105" ry="24"/><rect class="database" x="690" y="490" width="210" height="42"/><ellipse class="database" cx="795" cy="532" rx="105" ry="24"/><text class="db-name" x="795" y="510">Catalog DB</text><text class="tech" x="795" y="532">PostgreSQL</text></g>
+  <g><ellipse class="database" cx="1165" cy="490" rx="105" ry="24"/><rect class="database" x="1060" y="490" width="210" height="42"/><ellipse class="database" cx="1165" cy="532" rx="105" ry="24"/><text class="db-name" x="1165" y="510">Feed DB</text><text class="tech" x="1165" y="532">PostgreSQL</text></g>
+
+  <rect class="broker" x="555" y="600" width="650" height="90" rx="6"/>
+  <text class="name" x="880" y="630">Event Broker</text><text class="tech" x="880" y="654">[Container: RabbitMQ]</text><text class="desc" x="880" y="675">Доменные события между сервисами</text>
+
+  <rect class="container" x="290" y="770" width="270" height="120" rx="6"/>
+  <text class="name" x="425" y="801">Order Service</text><text class="tech" x="425" y="826">[Container: Go / HTTP]</text><text class="desc" x="425" y="851">Оформление, стоимость</text><text class="desc" x="425" y="872">и статусы заказов</text>
+  <rect class="container" x="660" y="770" width="270" height="120" rx="6"/>
+  <text class="name" x="795" y="801">Payment Service</text><text class="tech" x="795" y="826">[Container: Go / events]</text><text class="desc" x="795" y="851">Расчёт и учёт</text><text class="desc" x="795" y="872">платёжных операций</text>
+  <rect class="container" x="1030" y="770" width="270" height="120" rx="6"/>
+  <text class="name" x="1165" y="801">Notification Service</text><text class="tech" x="1165" y="826">[Container: Go / events]</text><text class="desc" x="1165" y="851">Уведомления о статусах</text><text class="desc" x="1165" y="872">и история доставки</text>
+
+  <g><ellipse class="database" cx="425" cy="930" rx="105" ry="24"/><rect class="database" x="320" y="930" width="210" height="42"/><ellipse class="database" cx="425" cy="972" rx="105" ry="24"/><text class="db-name" x="425" y="950">Order DB</text><text class="tech" x="425" y="972">PostgreSQL</text></g>
+  <g><ellipse class="database" cx="795" cy="930" rx="105" ry="24"/><rect class="database" x="690" y="930" width="210" height="42"/><ellipse class="database" cx="795" cy="972" rx="105" ry="24"/><text class="db-name" x="795" y="950">Payment DB</text><text class="tech" x="795" y="972">PostgreSQL</text></g>
+  <g><ellipse class="database" cx="1165" cy="930" rx="105" ry="24"/><rect class="database" x="1060" y="930" width="210" height="42"/><ellipse class="database" cx="1165" cy="972" rx="105" ry="24"/><text class="db-name" x="1165" y="950">Notification DB</text><text class="tech" x="1165" y="972">PostgreSQL</text></g>
+
+  <rect class="external" x="1490" y="735" width="275" height="110" rx="6"/>
+  <text class="name" x="1627" y="767">Payment Provider</text><text class="tech" x="1627" y="792">[External System]</text><text class="desc" x="1627" y="817">Проводит платежи</text>
+  <rect class="external" x="1490" y="900" width="275" height="110" rx="6"/>
+  <text class="name" x="1627" y="932">Notification Provider</text><text class="tech" x="1627" y="957">[External System]</text><text class="desc" x="1627" y="982">Доставляет email/SMS/push</text>
+
+  <path class="sync" d="M195 232h80v-70h55"/><text class="label" x="253" y="218">HTTPS</text>
+  <path class="sync" d="M195 387h95V198h40"/><text class="label" x="267" y="318">HTTPS</text>
+  <path class="sync" d="M580 177h205"/><text class="label" x="682" y="166">HTTPS/JSON</text>
+  <path class="sync" d="M860 230v50H425v50"/><text class="label" x="565" y="271">User API</text>
+  <path class="sync" d="M900 230v60H795v40"/><text class="label" x="844" y="280">Catalog API</text>
+  <path class="sync" d="M945 230v50h220v50"/><text class="label" x="1095" y="271">Feed API</text>
+  <path class="sync" d="M825 230v25H250v575h40"/><text class="label" x="277" y="742">Order API</text>
+  <path class="sync" d="M370 770V575h250V390h40"/><text class="label" x="612" y="480" transform="rotate(-90 612 480)">Актуальные товары и цены</text>
+  <path class="sync" d="M930 800h40v-90h480v80h40"/><text class="label" x="1280" y="700">HTTPS / провести платёж</text>
+  <path class="sync" d="M1300 855h90v100h100"/><text class="label" x="1424" y="943">HTTPS / отправить</text>
+  <path class="sync" d="M1030 855h-70v155H260V390h30"/><text class="label" x="650" y="1000">HTTP / получить контакт пользователя</text>
+
+  <path class="data" d="M425 450v18"/><path class="data" d="M795 450v18"/><path class="data" d="M1165 450v18"/>
+  <path class="data" d="M425 890v18"/><path class="data" d="M795 890v18"/><path class="data" d="M1165 890v18"/>
+
+  <path class="async" d="M795 556v44"/><text class="label" x="728" y="581">Product events</text>
+  <path class="async" d="M1085 600v-90h80v-60"/><text class="label" x="1104" y="577">Каталог + оплаченные заказы</text>
+  <path class="async" d="M425 770v-125h130"/><text class="label" x="460" y="674">OrderCreated</text><text class="label" x="470" y="692">OrderStatusChanged</text>
+  <path class="async" d="M680 690v35H500v45"/><text class="label" x="563" y="716">Результат платежа</text>
+  <path class="async" d="M780 690v80"/><text class="label" x="720" y="744">OrderCreated</text>
+  <path class="async" d="M830 770v-80"/><text class="label" x="922" y="735">PaymentSucceeded / Failed</text>
+  <path class="async" d="M1110 690v80"/><text class="label" x="1193" y="735">OrderStatusChanged</text>
+
+  <g transform="translate(285 1045)">
+    <text class="boundary-title" x="0" y="0">Легенда</text>
+    <rect class="container" x="0" y="20" width="36" height="24" rx="3"/><text class="small" x="48" y="38">сервис</text>
+    <rect class="database" x="260" y="20" width="36" height="24" rx="3"/><text class="small" x="308" y="38">отдельная база сервиса</text>
+    <path class="sync" d="M0 82h92"/><text class="small" x="110" y="87">синхронный вызов</text>
+    <path class="async" d="M300 82h92"/><text class="small" x="410" y="87">асинхронное событие</text>
+    <path class="data" d="M625 82h92"/><text class="small" x="735" y="87">доступ к собственной БД</text>
+  </g>
+</svg>
