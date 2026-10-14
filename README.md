@@ -2,7 +2,7 @@
 
 Цель проекта — написать свой учебный маркетплейс и постепенно добавлять в него новые части в следующих домашних заданиях.
 
-Сейчас в проекте есть описание архитектуры маркетплейса, C4-диаграмма, OpenAPI-контракт, кодогенерация HTTP API и запускаемая заглушка Commerce Service. Бизнес-логика CRUD, заказов и авторизации пока не реализована.
+Сейчас в проекте есть описание архитектуры маркетплейса, C4-диаграмма, OpenAPI-контракт, кодогенерация HTTP API, схема Commerce DB и запускаемая заглушка Commerce Service. Бизнес-логика CRUD, заказов и авторизации пока не реализована.
 
 ## C4-диаграмма
 
@@ -51,6 +51,20 @@ make generate
 Настройки находятся в [`services/commerce-service/internal/api/oapi-codegen.yaml`](services/commerce-service/internal/api/oapi-codegen.yaml). Для Commerce Service выбираются только операции с тегами `System`, `Products`, `Orders` и `Promo codes`; методы авторизации относятся к User Service и здесь не генерируются.
 
 Результат записывается в `internal/api/generated/commerce.gen.go`. Сгенерированный файл добавлен в `.gitignore`: он воспроизводится командой `make generate` и автоматически создаётся при сборке Docker-образа. Ручные DTO для HTTP API не используются.
+
+## База данных и миграции
+
+Commerce Service использует отдельную PostgreSQL-базу. Схема создаётся Flyway-миграцией [`V1__create_commerce_schema.sql`](services/commerce-service/migrations/V1__create_commerce_schema.sql) и содержит таблицы:
+
+- `products` — товары, цены, статусы и остатки;
+- `promo_codes` — глобальные промокоды и счётчик использований;
+- `orders` — заказы и их состояния;
+- `order_items` — позиции заказа и цена товара на момент оформления;
+- `user_operations` — операции создания и изменения заказов для проверки ограничения частоты.
+
+В базе есть обязательный индекс по `products.status`, ограничения для цен и остатков, связи между таблицами Commerce Service и автоматическое обновление `updated_at`. Индекс `orders_one_active_per_user_idx` не позволяет создать пользователю больше одного заказа в статусе `CREATED` или `PAYMENT_PENDING`.
+
+Поля `seller_id` и `user_id` содержат идентификаторы из User Service, но не являются внешними ключами: Commerce Service не обращается к базе другого сервиса.
 
 ## Домены и сервисы
 
@@ -181,7 +195,7 @@ Commerce Service выполняет в одной транзакции:
 
 ## Что реализовано
 
-Сгенерированные маршруты и strict-server интерфейс подключены к Commerce Service. Пока реализован только endpoint проверки работоспособности, а операции с товарами, заказами и промокодами возвращают `501 Not Implemented`:
+Сгенерированные маршруты и strict-server интерфейс подключены к Commerce Service. Для Commerce DB добавлены PostgreSQL и миграции Flyway. Пока реализован только endpoint проверки работоспособности, а операции с товарами, заказами и промокодами возвращают `501 Not Implemented`:
 
 ```http
 GET /health HTTP/1.1
@@ -207,19 +221,36 @@ Content-Type: application/json
 docker compose up --build -d
 ```
 
-Во время сборки Docker-образа код API генерируется из OpenAPI-контракта автоматически.
+При запуске PostgreSQL сначала проходит health-check, затем Flyway применяет миграции, и только после этого запускается Commerce Service. Во время сборки сервиса код API генерируется из OpenAPI-контракта автоматически.
 
 Проверить контейнер и health-check:
 
 ```bash
-docker compose ps
+docker compose ps -a
 curl -i http://localhost:8080/health
 ```
+
+Проверить применённые миграции и созданные таблицы:
+
+```bash
+docker compose exec commerce-db psql -U marketplace -d marketplace_commerce \
+  -c "SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;"
+
+docker compose exec commerce-db psql -U marketplace -d marketplace_commerce -c "\\dt"
+```
+
+По умолчанию база доступна на `localhost:5432`, имя базы — `marketplace_commerce`, пользователь и пароль — `marketplace`. Значения можно заменить переменными `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` и `POSTGRES_PORT`.
 
 Остановить контейнер:
 
 ```bash
 docker compose down
+```
+
+Чтобы удалить также локальные данные PostgreSQL и при следующем запуске создать базу заново:
+
+```bash
+docker compose down -v
 ```
 
 ### Без Docker
@@ -258,6 +289,8 @@ curl -i http://localhost:8080/health
         ├── go.mod
         ├── go.sum
         ├── cmd/server/main.go
+        ├── migrations
+        │   └── V1__create_commerce_schema.sql
         └── internal
             ├── api
             │   ├── generate.go
