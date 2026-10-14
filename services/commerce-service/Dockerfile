@@ -1,12 +1,14 @@
 FROM golang:1.26-alpine AS build
 
-WORKDIR /src
+WORKDIR /workspace/services/commerce-service
 
-COPY services/commerce-service/go.mod ./
+COPY services/commerce-service/go.mod services/commerce-service/go.sum ./
 RUN go mod download
 
-COPY services/commerce-service/cmd ./cmd
-COPY services/commerce-service/internal ./internal
+COPY api /workspace/api
+COPY services/commerce-service ./
+
+RUN go generate ./...
 
 RUN CGO_ENABLED=0 GOOS=linux go build \
     -trimpath \

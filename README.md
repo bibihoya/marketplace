@@ -2,7 +2,7 @@
 
 Цель проекта — написать свой учебный маркетплейс и постепенно добавлять в него новые части в следующих домашних заданиях.
 
-Сейчас в проекте есть описание архитектуры маркетплейса, C4-диаграмма, OpenAPI-контракт и запускаемая заглушка Commerce Service. Бизнес-логика CRUD, заказов и авторизации пока не реализована.
+Сейчас в проекте есть описание архитектуры маркетплейса, C4-диаграмма, OpenAPI-контракт, кодогенерация HTTP API и запускаемая заглушка Commerce Service. Бизнес-логика CRUD, заказов и авторизации пока не реализована.
 
 ## C4-диаграмма
 
@@ -37,6 +37,20 @@
 | `POST` | `/orders/{id}/cancel` | Отмена заказа |
 | `PATCH` | `/orders/{id}/status` | Переход заказа в следующее состояние |
 | `POST` | `/promo-codes` | Создание глобального промокода |
+
+## Кодогенерация
+
+DTO, интерфейс обработчиков и маршруты Commerce Service генерируются из [`api/openapi.yaml`](api/openapi.yaml) с помощью `oapi-codegen`. Версия генератора зафиксирована в `go.mod` как tool dependency.
+
+Запустить генерацию из корня проекта:
+
+```bash
+make generate
+```
+
+Настройки находятся в [`services/commerce-service/internal/api/oapi-codegen.yaml`](services/commerce-service/internal/api/oapi-codegen.yaml). Для Commerce Service выбираются только операции с тегами `System`, `Products`, `Orders` и `Promo codes`; методы авторизации относятся к User Service и здесь не генерируются.
+
+Результат записывается в `internal/api/generated/commerce.gen.go`. Сгенерированный файл добавлен в `.gitignore`: он воспроизводится командой `make generate` и автоматически создаётся при сборке Docker-образа. Ручные DTO для HTTP API не используются.
 
 ## Домены и сервисы
 
@@ -167,7 +181,7 @@ Commerce Service выполняет в одной транзакции:
 
 ## Что реализовано
 
-Пока реализована только заглушка Commerce Service без бизнес-логики. У неё есть endpoint проверки работоспособности:
+Сгенерированные маршруты и strict-server интерфейс подключены к Commerce Service. Пока реализован только endpoint проверки работоспособности, а операции с товарами, заказами и промокодами возвращают `501 Not Implemented`:
 
 ```http
 GET /health HTTP/1.1
@@ -180,7 +194,7 @@ Host: localhost:8080
 HTTP/1.1 200 OK
 Content-Type: application/json
 
-{"status":"ok","service":"commerce-service"}
+{"service":"commerce-service","status":"ok"}
 ```
 
 ## Как запустить
@@ -192,6 +206,8 @@ Content-Type: application/json
 ```bash
 docker compose up --build -d
 ```
+
+Во время сборки Docker-образа код API генерируется из OpenAPI-контракта автоматически.
 
 Проверить контейнер и health-check:
 
@@ -208,11 +224,10 @@ docker compose down
 
 ### Без Docker
 
-Понадобится Go 1.26 или новее.
+Понадобятся Go 1.26 или новее и `make`.
 
 ```bash
-cd services/commerce-service
-go run ./cmd/server
+make run
 ```
 
 После запуска в другом терминале:
@@ -227,6 +242,7 @@ curl -i http://localhost:8080/health
 .
 ├── api
 │   └── openapi.yaml
+├── Makefile
 ├── README.md
 ├── compose.yaml
 ├── docs
@@ -240,6 +256,12 @@ curl -i http://localhost:8080/health
     └── commerce-service
         ├── Dockerfile
         ├── go.mod
+        ├── go.sum
         ├── cmd/server/main.go
-        └── internal/httpapi/handler.go
+        └── internal
+            ├── api
+            │   ├── generate.go
+            │   ├── oapi-codegen.yaml
+            │   └── generated/doc.go
+            └── httpapi/handler.go
 ```
