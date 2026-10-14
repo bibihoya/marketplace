@@ -41,6 +41,8 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/HealthResponse"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   /auth/register:
     post:
@@ -66,6 +68,8 @@ paths:
           $ref: "#/components/responses/ValidationError"
         "409":
           $ref: "#/components/responses/ConflictError"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   /auth/login:
     post:
@@ -90,6 +94,8 @@ paths:
           $ref: "#/components/responses/ValidationError"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   /auth/refresh:
     post:
@@ -114,6 +120,8 @@ paths:
           $ref: "#/components/responses/ValidationError"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   /products:
     get:
@@ -138,6 +146,8 @@ paths:
           $ref: "#/components/responses/ValidationError"
         "401":
           $ref: "#/components/responses/UnauthorizedError"
+        "500":
+          $ref: "#/components/responses/InternalError"
     post:
       tags: [Products]
       operationId: createProduct
@@ -165,6 +175,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedError"
         "403":
           $ref: "#/components/responses/AccessDeniedError"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   /products/{id}:
     parameters:
@@ -186,6 +198,8 @@ paths:
           $ref: "#/components/responses/UnauthorizedError"
         "404":
           $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalError"
     put:
       tags: [Products]
       operationId: updateProduct
@@ -213,6 +227,8 @@ paths:
           $ref: "#/components/responses/AccessDeniedError"
         "404":
           $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalError"
     delete:
       tags: [Products]
       operationId: archiveProduct
@@ -234,6 +250,8 @@ paths:
           $ref: "#/components/responses/AccessDeniedError"
         "404":
           $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   /orders:
     post:
@@ -272,6 +290,8 @@ paths:
           $ref: "#/components/responses/UnprocessableError"
         "429":
           $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   /orders/{id}:
     parameters:
@@ -295,6 +315,8 @@ paths:
           $ref: "#/components/responses/AccessDeniedError"
         "404":
           $ref: "#/components/responses/NotFoundError"
+        "500":
+          $ref: "#/components/responses/InternalError"
     put:
       tags: [Orders]
       operationId: updateOrder
@@ -330,6 +352,8 @@ paths:
           $ref: "#/components/responses/UnprocessableError"
         "429":
           $ref: "#/components/responses/RateLimitError"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   /orders/{id}/cancel:
     parameters:
@@ -358,6 +382,8 @@ paths:
           $ref: "#/components/responses/NotFoundError"
         "409":
           $ref: "#/components/responses/ConflictError"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   /orders/{id}/status:
     parameters:
@@ -394,6 +420,8 @@ paths:
           $ref: "#/components/responses/NotFoundError"
         "409":
           $ref: "#/components/responses/ConflictError"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
   /promo-codes:
     post:
@@ -423,6 +451,8 @@ paths:
           $ref: "#/components/responses/AccessDeniedError"
         "409":
           $ref: "#/components/responses/ConflictError"
+        "500":
+          $ref: "#/components/responses/InternalError"
 
 components:
   securitySchemes:
@@ -531,6 +561,15 @@ components:
             message: Order operation rate limit exceeded
             details:
               retry_after_seconds: 60
+    InternalError:
+      description: Непредвиденная внутренняя ошибка сервиса
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/ErrorResponse"
+          example:
+            error_code: INTERNAL_ERROR
+            message: Internal server error
 
   schemas:
     HealthResponse:
@@ -665,6 +704,7 @@ components:
         price:
           type: number
           format: decimal
+          x-go-type: float64
           minimum: 0.01
           multipleOf: 0.01
         stock:
@@ -694,6 +734,7 @@ components:
         price:
           type: number
           format: decimal
+          x-go-type: float64
           minimum: 0.01
           multipleOf: 0.01
         stock:
@@ -728,6 +769,7 @@ components:
         price:
           type: number
           format: decimal
+          x-go-type: float64
           readOnly: true
         stock:
           type: integer
@@ -845,6 +887,7 @@ components:
         price_at_order:
           type: number
           format: decimal
+          x-go-type: float64
           readOnly: true
 
     OrderResponse:
@@ -882,11 +925,13 @@ components:
         total_amount:
           type: number
           format: decimal
+          x-go-type: float64
           minimum: 0
           readOnly: true
         discount_amount:
           type: number
           format: decimal
+          x-go-type: float64
           minimum: 0
           readOnly: true
         created_at:
@@ -922,12 +967,14 @@ components:
         discount_value:
           type: number
           format: decimal
+          x-go-type: float64
           minimum: 0.01
           multipleOf: 0.01
           description: Для PERCENTAGE верхняя граница значения не задаётся; применённая скидка ограничена 70% суммы заказа
         min_order_amount:
           type: number
           format: decimal
+          x-go-type: float64
           minimum: 0
           multipleOf: 0.01
         max_uses:
@@ -971,10 +1018,12 @@ components:
         discount_value:
           type: number
           format: decimal
+          x-go-type: float64
           readOnly: true
         min_order_amount:
           type: number
           format: decimal
+          x-go-type: float64
           readOnly: true
         max_uses:
           type: integer
@@ -1018,6 +1067,7 @@ components:
         - ACCESS_DENIED
         - EMAIL_ALREADY_EXISTS
         - INVALID_CREDENTIALS
+        - INTERNAL_ERROR
 
     ErrorResponse:
       type: object

@@ -40,6 +40,10 @@ services:
     image: marketplace/commerce-service:local
     environment:
       PORT: "8080"
+      DATABASE_URL: postgres://${POSTGRES_USER:-marketplace}:${POSTGRES_PASSWORD:-marketplace}@commerce-db:5432/${POSTGRES_DB:-marketplace_commerce}?sslmode=disable
+      JWT_SECRET: ${JWT_SECRET:-local-development-jwt-secret-change-me}
+      JWT_ISSUER: ${JWT_ISSUER:-marketplace-user-service}
+      ORDER_RATE_LIMIT: ${ORDER_RATE_LIMIT:-1m}
     ports:
       - "8080:8080"
     depends_on:
