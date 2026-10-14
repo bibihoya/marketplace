@@ -10,7 +10,7 @@ import (
 	"syscall"
 	"time"
 
-	"marketplace/catalog-service/internal/httpapi"
+	"marketplace/commerce-service/internal/httpapi"
 )
 
 const (
@@ -44,7 +44,7 @@ func main() {
 		}
 	}()
 
-	log.Printf("catalog-service is listening on %s", server.Addr)
+	log.Printf("commerce-service is listening on %s", server.Addr)
 	if err := server.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 		log.Fatalf("HTTP server failed: %v", err)
 	}

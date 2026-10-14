@@ -1,9 +1,9 @@
 services:
-  catalog-service:
+  commerce-service:
     build:
       context: .
-      dockerfile: services/catalog-service/Dockerfile
-    image: marketplace/catalog-service:local
+      dockerfile: services/commerce-service/Dockerfile
+    image: marketplace/commerce-service:local
     environment:
       PORT: "8080"
     ports:

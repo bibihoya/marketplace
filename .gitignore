@@ -1,3 +1,4 @@
 .DS_Store
-/services/catalog-service/catalog-service
+/services/commerce-service/commerce-service
+/services/*/internal/api/generated/
 coverage.out

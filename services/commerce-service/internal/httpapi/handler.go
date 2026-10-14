@@ -2,9 +2,9 @@ package httpapi
 
 import "net/http"
 
-const healthResponse = `{"status":"ok","service":"catalog-service"}`
+const healthResponse = `{"status":"ok","service":"commerce-service"}`
 
-// NewHandler creates the HTTP API for the Catalog Service skeleton.
+// NewHandler creates the HTTP API for the Commerce Service skeleton.
 func NewHandler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/health", health)

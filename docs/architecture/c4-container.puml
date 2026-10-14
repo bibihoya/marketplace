@@ -10,22 +10,19 @@ System_Ext(payment_provider, "Payment Provider", "Проводит платеж�
 System_Ext(notification_provider, "Notification Provider", "Доставляет email, SMS или push")
 
 System_Boundary(marketplace, "Marketplace") {
-    Container(web, "Web Application", "Web", "Интерфейс покупателя и продавца")
+    Container(web, "Web Application", "Web", "Интерфейс пользователей маркетплейса")
     Container(gateway, "API Gateway", "HTTP reverse proxy", "Единая точка входа, маршрутизация и проверка токена")
 
-    Container(user_service, "User Service", "Go / HTTP", "Учётные записи, профиль, роли buyer и seller")
-    ContainerDb(user_db, "User DB", "PostgreSQL", "Пользователи, роли, контакты и статусы")
+    Container(user_service, "User Service", "Go / HTTP", "Регистрация, вход, JWT, роли и контакты")
+    ContainerDb(user_db, "User DB", "PostgreSQL", "Пользователи, роли и refresh-токены")
 
-    Container(catalog_service, "Catalog Service", "Go / HTTP", "Товары, категории, цены и публикация")
-    ContainerDb(catalog_db, "Catalog DB", "PostgreSQL", "Товары, категории и актуальные цены")
+    Container(commerce_service, "Commerce Service", "Go / HTTP", "Товары, остатки, заказы и промокоды")
+    ContainerDb(commerce_db, "Commerce DB", "PostgreSQL", "Товары, заказы, позиции, промокоды и операции пользователей")
 
     Container(feed_service, "Feed Service", "Go / HTTP", "Персональная лента, предпочтения и ранжирование")
     ContainerDb(feed_db, "Feed DB", "PostgreSQL", "Взаимодействия, предпочтения и проекция товаров")
 
-    Container(order_service, "Order Service", "Go / HTTP", "Оформление, стоимость и статусы заказов")
-    ContainerDb(order_db, "Order DB", "PostgreSQL", "Заказы, позиции, снимки цен и статусы")
-
-    Container(payment_service, "Payment Service", "Go / events", "Расчёт суммы, проведение и учёт платежей")
+    Container(payment_service, "Payment Service", "Go / events", "Проведение и учёт платежей")
     ContainerDb(payment_db, "Payment DB", "PostgreSQL", "Платежи, попытки и внешние транзакции")
 
     Container(notification_service, "Notification Service", "Go / events", "Уведомления о статусах заказа")
@@ -38,25 +35,21 @@ Rel(buyer, web, "Использует", "HTTPS")
 Rel(seller, web, "Использует", "HTTPS")
 Rel(web, gateway, "Вызывает API", "HTTPS/JSON")
 
-Rel(gateway, user_service, "Учётная запись и профиль", "HTTP/JSON, sync")
-Rel(gateway, catalog_service, "Управление и чтение товаров", "HTTP/JSON, sync")
+Rel(gateway, user_service, "Регистрация, вход и обновление токена", "HTTP/JSON, sync")
+Rel(gateway, commerce_service, "Товары, заказы и промокоды", "HTTP/JSON, sync")
 Rel(gateway, feed_service, "Получение ленты и фиксация просмотров", "HTTP/JSON, sync")
-Rel(gateway, order_service, "Оформление и просмотр заказов", "HTTP/JSON, sync")
 
 Rel(user_service, user_db, "Читает и изменяет")
-Rel(catalog_service, catalog_db, "Читает и изменяет")
+Rel(commerce_service, commerce_db, "Читает и изменяет в одной транзакции")
 Rel(feed_service, feed_db, "Читает и изменяет")
-Rel(order_service, order_db, "Читает и изменяет")
 Rel(payment_service, payment_db, "Читает и изменяет")
 Rel(notification_service, notification_db, "Читает и изменяет")
 
-Rel(order_service, catalog_service, "Получает актуальные товары и цены", "HTTP/JSON, sync")
-Rel(catalog_service, broker, "Публикует ProductPublished/Updated/Unpublished", "AMQP, async")
-Rel(order_service, broker, "Публикует OrderCreated/OrderStatusChanged", "AMQP, async")
+Rel(commerce_service, broker, "Публикует ProductChanged/OrderCreated/OrderStatusChanged", "AMQP, async")
 Rel(payment_service, broker, "Публикует PaymentSucceeded/PaymentFailed", "AMQP, async")
 Rel(broker, feed_service, "Доставляет изменения каталога и оплаченные заказы", "AMQP, async")
 Rel(broker, payment_service, "Доставляет OrderCreated", "AMQP, async")
-Rel(broker, order_service, "Доставляет результат платежа", "AMQP, async")
+Rel(broker, commerce_service, "Доставляет результат платежа", "AMQP, async")
 Rel(broker, notification_service, "Доставляет OrderStatusChanged", "AMQP, async")
 
 Rel(payment_service, payment_provider, "Проводит платёж", "HTTPS, sync")
