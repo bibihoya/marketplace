@@ -1,4 +1,6 @@
 .DS_Store
+.env
 /services/commerce-service/commerce-service
+/services/user-service/user-service
 /services/*/internal/api/generated/*.gen.go
 coverage.out

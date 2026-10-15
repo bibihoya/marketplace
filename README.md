@@ -2,7 +2,7 @@
 
 Цель проекта — написать свой учебный маркетплейс и постепенно добавлять в него новые части в следующих домашних заданиях.
 
-Сейчас в проекте есть описание архитектуры маркетплейса, C4-диаграмма, OpenAPI-контракт, кодогенерация HTTP API, схема Commerce DB и реализация Commerce Service. Сервис умеет работать с товарами, промокодами и заказами. User Service с регистрацией и выдачей токенов будет добавлен следующим этапом.
+Сейчас в проекте есть описание архитектуры маркетплейса, C4-диаграмма, OpenAPI-контракт и реализация двух микросервисов. Commerce Service работает с товарами, промокодами и заказами, а User Service регистрирует пользователей и выдаёт access- и refresh-токены.
 
 ## C4-диаграмма
 
@@ -40,7 +40,7 @@
 
 ## Кодогенерация
 
-DTO, интерфейс обработчиков и маршруты Commerce Service генерируются из [`api/openapi.yaml`](api/openapi.yaml) с помощью `oapi-codegen`. Версия генератора зафиксирована в `go.mod` как tool dependency.
+DTO, интерфейсы обработчиков и маршруты обоих сервисов генерируются из [`api/openapi.yaml`](api/openapi.yaml) с помощью `oapi-codegen`. Версия генератора зафиксирована в `go.mod` каждого сервиса как tool dependency.
 
 Запустить генерацию из корня проекта:
 
@@ -48,9 +48,9 @@ DTO, интерфейс обработчиков и маршруты Commerce Se
 make generate
 ```
 
-Настройки находятся в [`services/commerce-service/internal/api/oapi-codegen.yaml`](services/commerce-service/internal/api/oapi-codegen.yaml). Для Commerce Service выбираются только операции с тегами `System`, `Products`, `Orders` и `Promo codes`; методы авторизации относятся к User Service и здесь не генерируются.
+Для Commerce Service выбираются операции с тегами `System`, `Products`, `Orders` и `Promo codes`, для User Service — `System` и `Auth`. Настройки лежат в `internal/api/oapi-codegen.yaml` соответствующего сервиса.
 
-Результат записывается в `internal/api/generated/commerce.gen.go`. Сгенерированный файл добавлен в `.gitignore`: он воспроизводится командой `make generate` и автоматически создаётся при сборке Docker-образа. Ручные DTO для HTTP API не используются.
+Результат записывается в `internal/api/generated/*.gen.go`. Сгенерированные файлы добавлены в `.gitignore`: они воспроизводятся командой `make generate` и автоматически создаются при сборке Docker-образов. Ручные DTO для HTTP API не используются.
 
 ## База данных и миграции
 
@@ -65,6 +65,8 @@ Commerce Service использует отдельную PostgreSQL-базу. С
 В базе есть обязательный индекс по `products.status`, ограничения для цен и остатков, связи между таблицами Commerce Service и автоматическое обновление `updated_at`. Индекс `orders_one_active_per_user_idx` не позволяет создать пользователю больше одного заказа в статусе `CREATED` или `PAYMENT_PENDING`.
 
 Поля `seller_id` и `user_id` содержат идентификаторы из User Service, но не являются внешними ключами: Commerce Service не обращается к базе другого сервиса.
+
+User Service использует отдельную User DB. Flyway-миграция создаёт таблицу пользователей и таблицу refresh-сессий. Пароль хранится только в виде bcrypt-хеша, а полный refresh JWT в базу не записывается — сохраняется его SHA-256-хеш.
 
 ## Домены и сервисы
 
@@ -195,7 +197,7 @@ Commerce Service выполняет в одной транзакции:
 
 ## Что реализовано
 
-Сгенерированные маршруты, DTO и strict-server интерфейс подключены к Commerce Service. Запрос проходит через слои в таком порядке:
+Сгенерированные маршруты, DTO и strict-server интерфейсы подключены к обоим сервисам. Запрос проходит через слои в таком порядке:
 
 ```text
 HTTP request → handler → service → repository → PostgreSQL
@@ -207,7 +209,9 @@ HTTP request → handler → service → repository → PostgreSQL
 
 Реализованы CRUD товаров, мягкое удаление, пагинация и фильтры, создание промокодов, а также создание, чтение, изменение, отмена и переходы состояний заказа. Создание, изменение и отмена заказа выполняются в транзакциях с блокировкой строк товаров и промокодов. Денежные значения внутри сервиса хранятся в целых сотых, поэтому расчёты не зависят от ошибок `float`.
 
-Все операции, кроме health-check, защищены JWT. Commerce Service проверяет HMAC-подпись, issuer, срок действия, `sub`, роль и claim `token_type=access`. Секрет и issuer должны совпадать с настройками User Service, который будет выдавать токены.
+Все операции, кроме health-check, защищены JWT. Commerce Service проверяет HMAC-подпись, issuer, срок действия, `sub`, роль и claim `token_type=access`. Секрет и issuer должны совпадать с настройками User Service, который выдаёт токены.
+
+User Service реализует регистрацию `USER` и `SELLER`, вход и обновление токенов. Access JWT действует 20 минут, refresh JWT — 14 дней. При обновлении refresh-токен ротируется: старая запись удаляется и заменяется новой одной SQL-операцией. Локальный администратор может быть создан при запуске через `ADMIN_EMAIL` и `ADMIN_PASSWORD`.
 
 Проверка работоспособности:
 
@@ -235,6 +239,19 @@ Content-Type: application/json
 | `ORDER_RATE_LIMIT` | `1m` | Минимальный интервал между однотипными операциями с заказом |
 | `PORT` | `8080` | HTTP-порт сервиса |
 
+Основные настройки User Service:
+
+| Переменная | Значение по умолчанию | Назначение |
+|---|---|---|
+| `DATABASE_URL` | локальная User DB | Строка подключения к PostgreSQL |
+| `JWT_SECRET` | локальный секрет для разработки | Подпись access- и refresh-токенов |
+| `JWT_ISSUER` | `marketplace-user-service` | Издатель JWT |
+| `ACCESS_TOKEN_TTL` | `20m` | Срок действия access-токена |
+| `REFRESH_TOKEN_TTL` | `336h` | Срок действия refresh-токена |
+| `ADMIN_EMAIL` | не задан | Email локального администратора |
+| `ADMIN_PASSWORD` | не задан | Начальный пароль локального администратора |
+| `PORT` | `8081` | HTTP-порт сервиса |
+
 ## Как запустить
 
 ### В Docker
@@ -245,13 +262,16 @@ Content-Type: application/json
 docker compose up --build -d
 ```
 
-При запуске PostgreSQL сначала проходит health-check, затем Flyway применяет миграции, и только после этого запускается Commerce Service. Во время сборки сервиса код API генерируется из OpenAPI-контракта автоматически.
+Чтобы при старте создать локального администратора, скопируйте `.env.example` в `.env` и замените пример пароля. Без этих переменных User Service запустится, но администратора автоматически не создаст.
+
+При запуске обе PostgreSQL-базы сначала проходят health-check, затем Flyway применяет миграции, и только после этого запускаются сервисы. Во время сборки код API генерируется из OpenAPI-контракта автоматически.
 
 Проверить контейнер и health-check:
 
 ```bash
 docker compose ps -a
 curl -i http://localhost:8080/health
+curl -i http://localhost:8081/health
 ```
 
 Проверить применённые миграции и созданные таблицы:
@@ -261,9 +281,14 @@ docker compose exec commerce-db psql -U marketplace -d marketplace_commerce \
   -c "SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;"
 
 docker compose exec commerce-db psql -U marketplace -d marketplace_commerce -c "\\dt"
+
+docker compose exec user-db psql -U marketplace -d marketplace_user \
+  -c "SELECT version, description, success FROM flyway_schema_history ORDER BY installed_rank;"
+
+docker compose exec user-db psql -U marketplace -d marketplace_user -c "\\dt"
 ```
 
-По умолчанию база доступна на `localhost:5432`, имя базы — `marketplace_commerce`, пользователь и пароль — `marketplace`. Значения можно заменить переменными `POSTGRES_DB`, `POSTGRES_USER`, `POSTGRES_PASSWORD` и `POSTGRES_PORT`.
+Commerce DB доступна на `localhost:5432`, User DB — на `localhost:5433`. Значения можно заменить переменными окружения из `compose.yaml`.
 
 Остановить контейнер:
 
@@ -279,16 +304,18 @@ docker compose down -v
 
 ### Без Docker
 
-Понадобятся Go 1.26 или новее и `make`.
+Понадобятся Go 1.26 или новее, `make`, две локальные PostgreSQL-базы и применённые Flyway-миграции. Сервисы запускаются в разных терминалах:
 
 ```bash
-make run
+make run-user
+make run-commerce
 ```
 
 После запуска в другом терминале:
 
 ```bash
 curl -i http://localhost:8080/health
+curl -i http://localhost:8081/health
 ```
 
 ## Структура проекта
@@ -306,19 +333,35 @@ curl -i http://localhost:8080/health
 │   │   └── c4-container.svg
 │   └── adr
 │       ├── 001-service-decomposition.md
-│       └── 002-commerce-service-boundary.md
+│       ├── 002-commerce-service-boundary.md
+│       └── 003-user-service.md
 └── services
-    └── commerce-service
+    ├── commerce-service
+    │   ├── Dockerfile
+    │   ├── go.mod
+    │   ├── go.sum
+    │   ├── cmd/server/main.go
+    │   ├── migrations
+    │   └── internal
+    │       ├── api
+    │       ├── auth
+    │       ├── config
+    │       ├── domain
+    │       ├── handler
+    │       ├── repository
+    │       └── service
+    └── user-service
         ├── Dockerfile
         ├── go.mod
         ├── go.sum
         ├── cmd/server/main.go
         ├── migrations
-        │   └── V1__create_commerce_schema.sql
+        │   └── V1__create_user_schema.sql
         └── internal
             ├── api
-            │   ├── generate.go
-            │   ├── oapi-codegen.yaml
-            │   └── generated/doc.go
-            └── httpapi/handler.go
+            ├── config
+            ├── domain
+            ├── handler
+            ├── repository
+            └── service
 ```
