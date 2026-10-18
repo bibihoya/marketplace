@@ -4,6 +4,8 @@
 
 Сейчас в проекте есть описание архитектуры маркетплейса, C4-диаграмма, OpenAPI-контракт и реализация двух микросервисов. Commerce Service работает с товарами, промокодами и заказами, а User Service регистрирует пользователей и выдаёт access- и refresh-токены.
 
+C4-диаграмма показывает целевую архитектуру всего маркетплейса. На текущем этапе реализованы User Service и Commerce Service. API Gateway пока не добавлен, поэтому локально клиент обращается к сервисам напрямую: к Commerce Service на порту `8080`, к User Service — на порту `8081`.
+
 ## C4-диаграмма
 
 ![C4-диаграмма контейнеров](docs/architecture/c4-container.svg)
@@ -51,6 +53,28 @@ make generate
 Для Commerce Service выбираются операции с тегами `System`, `Products`, `Orders` и `Promo codes`, для User Service — `System` и `Auth`. Настройки лежат в `internal/api/oapi-codegen.yaml` соответствующего сервиса.
 
 Результат записывается в `internal/api/generated/*.gen.go`. Сгенерированные файлы добавлены в `.gitignore`: они воспроизводятся командой `make generate` и автоматически создаются при сборке Docker-образов. Ручные DTO для HTTP API не используются.
+
+## Команды разработки
+
+Основные команды собраны в `Makefile`:
+
+```bash
+make help          # показать доступные команды
+make generate      # сгенерировать HTTP API обоих сервисов
+make build         # собрать оба сервиса
+make vet           # запустить go vet
+make fmt-check     # проверить форматирование
+make verify        # выполнить все статические проверки
+make up            # собрать и поднять проект в Docker
+make down          # остановить контейнеры
+make ps            # показать состояние контейнеров
+make logs          # показать логи сервисов
+make db-commerce   # открыть psql для Commerce DB
+make db-user       # открыть psql для User DB
+make reset         # удалить контейнеры и локальные данные БД
+```
+
+`make reset` удаляет Docker volumes обеих баз. Для обычной остановки используется `make down`.
 
 ## База данных и миграции
 
@@ -116,7 +140,7 @@ Feed Service не участвует в транзакции оформлени�
 
 ## Как сервисы взаимодействуют
 
-HTTP используется, когда ответ нужен сразу. RabbitMQ используется для событий, которые можно обработать асинхронно.
+В целевой архитектуре HTTP используется, когда ответ нужен сразу, а RabbitMQ — для событий, которые можно обработать асинхронно. В текущем локальном окружении реализованы только прямые HTTP-вызовы User Service и Commerce Service.
 
 | Откуда | Куда | Как | Для чего |
 |---|---|---|---|
@@ -259,8 +283,10 @@ Content-Type: application/json
 Нужны Docker Engine или совместимая среда, например Colima, и Docker Compose v2.
 
 ```bash
-docker compose up --build -d
+make up
 ```
+
+Эта команда выполняет `docker compose up --build -d`.
 
 Чтобы при старте создать локального администратора, скопируйте `.env.example` в `.env` и замените пример пароля. Без этих переменных User Service запустится, но администратора автоматически не создаст.
 
@@ -293,14 +319,16 @@ Commerce DB доступна на `localhost:5432`, User DB — на `localhost:
 Остановить контейнер:
 
 ```bash
-docker compose down
+make down
 ```
 
 Чтобы удалить также локальные данные PostgreSQL и при следующем запуске создать базу заново:
 
 ```bash
-docker compose down -v
+make reset
 ```
+
+Краткий порядок ручной демонстрации и примеры запросов находятся в [`docs/e2e.md`](docs/e2e.md).
 
 ### Без Docker
 
@@ -331,10 +359,11 @@ curl -i http://localhost:8081/health
 │   ├── architecture
 │   │   ├── c4-container.puml
 │   │   └── c4-container.svg
-│   └── adr
-│       ├── 001-service-decomposition.md
-│       ├── 002-commerce-service-boundary.md
-│       └── 003-user-service.md
+│   ├── adr
+│   │   ├── 001-service-decomposition.md
+│   │   ├── 002-commerce-service-boundary.md
+│   │   └── 003-user-service.md
+│   └── e2e.md
 └── services
     ├── commerce-service
     │   ├── Dockerfile

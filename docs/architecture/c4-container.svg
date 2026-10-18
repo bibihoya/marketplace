@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="1800" height="1250" viewBox="0 0 1800 1250" role="img" aria-labelledby="title desc">
-  <title id="title">Marketplace — диаграмма контейнеров C4</title>
+  <title id="title">Marketplace — целевая диаграмма контейнеров C4</title>
   <desc id="desc">Покупатель и продавец используют Web Application и API Gateway. Marketplace состоит из пяти доменных сервисов с отдельными базами PostgreSQL, RabbitMQ и внешних провайдеров.</desc>
   <defs>
     <style>
@@ -12,7 +12,7 @@
   </defs>
 
   <rect class="canvas" x="1" y="1" width="1798" height="1248"/>
-  <text class="page-title" x="900" y="42" text-anchor="middle">Marketplace — диаграмма контейнеров C4</text>
+  <text class="page-title" x="900" y="42" text-anchor="middle">Marketplace — целевая диаграмма контейнеров C4</text>
   <rect class="boundary" x="230" y="70" width="1200" height="1090" rx="10"/>
   <text class="boundary-title" x="255" y="103">Software System: Marketplace</text>
 

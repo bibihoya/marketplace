@@ -1,7 +1,7 @@
 @startuml
 !include <C4/C4_Container>
 
-title Marketplace — диаграмма контейнеров C4
+title Marketplace — целевая диаграмма контейнеров C4
 
 Person(buyer, "Покупатель", "Просматривает ленту, оформляет и оплачивает заказы")
 Person(seller, "Продавец", "Управляет собственными товарами")
